@@ -12,11 +12,3 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "redis.clients" % "jedis" % "2.8.0"
-
-// new repo on maven.org
-libraryDependencies += "com.github.etaty" %% "rediscala" % "1.6.0"
-
-
-// old repo on bintray (1.5.0 and inferior version)
-resolvers += "rediscala" at "http://dl.bintray.com/etaty/maven"
-libraryDependencies += "com.etaty.rediscala" %% "rediscala" % "1.5.0"

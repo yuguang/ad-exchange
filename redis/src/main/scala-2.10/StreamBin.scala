@@ -8,10 +8,6 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import com.redislabs.provider.redis._
 import scala.util.Random
-import redis.RedisClient
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object StreamBin {
   private val batchInterval = getEnv("BATCH_INTERVAL", "2").toInt
@@ -27,8 +23,6 @@ object StreamBin {
 
   def main(args: Array[String]) {
     val topicsSet = topics.split(",").toSet
-
-    val redisClient = RedisClient(redisHost, redisPort, Option(redisPass))
 
     val sc = new SparkContext(new SparkConf()
       .setMaster("local").setAppName(getClass.getName)
@@ -51,18 +45,21 @@ object StreamBin {
     }).persist()
 
     visitorStream.foreachRDD(rdd => {
-      // reduce by key so we will only get one record for every primary key
+      // reduce by key so we will only get one record for every domainId domain exchangeId triplet
       val reducedRDD =
         rdd.reduceByKey((a,b) => if (a._1.compareTo(b._1) > 0) a else b)
       val hashRDD = reducedRDD.map(r => {
         // fill in the exchangeId if not present
         var exchangeId = r._1._1
         if (exchangeId.length() == 0) {
+          // generate a random exchangeId
           exchangeId = Random.nextInt(1000000000).toString
         }
+        // make a tuple of domainId + domain to exchangeId
         (r._1._2 + "," + r._1._3, exchangeId)
       })
 
+      // store domainId + domain, exchangeId key value maps to redis
       sc.toRedisKV(hashRDD, expireTime)
     })
 
