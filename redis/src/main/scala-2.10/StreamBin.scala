@@ -54,18 +54,18 @@ object StreamBin {
       // reduce by key so we will only get one record for every primary key
       val reducedRDD =
         rdd.reduceByKey((a,b) => if (a._1.compareTo(b._1) > 0) a else b)
-      reducedRDD.map(r => {
+      val hashRDD = reducedRDD.map(r => {
         // fill in the exchangeId if not present
         var exchangeId = r._1._1
         if (exchangeId.length() == 0) {
-          exchangeId = Random.nextInt(1000000).toString
+          exchangeId = Random.nextInt(1000000000).toString
         }
-        r._1._2 + "," + r._1._3, r._1._1
-
+        (r._1._2 + "," + r._1._3, exchangeId)
       })
+
+      sc.toRedisKV(hashRDD, expireTime)
     })
 
-    sc.toRedisHASH(exchangeId, f"$domain%s$domainId%d", expireTime)
   }
 
   def getEnv(name: String, default: String) = {
