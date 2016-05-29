@@ -5,7 +5,7 @@ This pipeline requires Kafka 0.8+, Spark 1.5+, Redis 3.0.3, Scala 2.10.4
 
 Compile sbt project
 ===================
-(Spark-Redis)[https://github.com/RedisLabs/spark-redis] is one of the dependencies of the Spark streaming application.
+[Spark-Redis](https://github.com/RedisLabs/spark-redis) is one of the dependencies of the Spark streaming application.
 It's not an official package yet, so I am building the project against the source.
 
     git clone https://github.com/yuguang/ad-exchange
