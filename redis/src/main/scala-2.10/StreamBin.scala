@@ -15,7 +15,7 @@ object StreamBin {
   private val zkQuorum = getEnv("ZOOKEEPER_QUORUM", "localhost:2181")
   private val brokers = getEnv("KAFKA_BROKER", "ec2-52-88-49-174.us-west-2.compute.amazonaws.com:9092")
   private val topics = getEnv("KAFKA_TOPIC", "rawdata")
-  private val redisHost = getEnv("REDIS_HOST", "localhost")
+  private val redisHost = getEnv("REDIS_HOST", "redis")
   private val redisPass = getEnv("REDIS_PASS", "1pass")
   private val redisPort = getEnv("REDIS_PORT", "6379").toInt
   // set the expire time to 7 days
@@ -27,8 +27,7 @@ object StreamBin {
     val sc = new SparkContext(new SparkConf()
       .setMaster("local").setAppName(getClass.getName)
       .set("redis.host", redisHost)
-      .set("redis.port", redisPort.toString)
-      .set("redis.auth", redisPass))
+      .set("redis.port", redisPort.toString))
     val ssc = new StreamingContext(sc, Seconds(batchInterval))
 
     ssc.checkpoint(checkpointURL)
@@ -62,6 +61,10 @@ object StreamBin {
       // store domainId + domain, exchangeId key value maps to redis
       sc.toRedisKV(hashRDD, expireTime)
     })
+
+    // start the computation
+    ssc.start()
+    ssc.awaitTermination()
 
   }
 
